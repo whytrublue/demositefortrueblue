@@ -144,7 +144,7 @@ if uploaded_file:
 
         st.markdown(f"Showing rows {start_idx + 1} to {min(end_idx, total_rows)} of {total_rows}")
 
-        st.dataframe(filtered_df.iloc[start_idx:end_idx], use_container_width=True)
+        st.dataframe(filtered_df.iloc[start_idx:end_idx], use_container_width=True, height=600)
 
         st.download_button(
             label="📥 Download Filtered Data as CSV",
