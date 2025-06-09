@@ -182,7 +182,7 @@ if uploaded_files:
 
         page_df = page_df.fillna("")
 
-        # Scroll buttons HTML + JS
+        # Scroll buttons HTML + JS added here BEFORE dataframe
         scroll_controls = """
         <div class="horizontal-scroll-buttons">
             <button class="scroll-btn" onclick="scrollTable(-1)">⬅ Scroll Left</button>
@@ -190,7 +190,7 @@ if uploaded_files:
         </div>
         <script>
         function scrollTable(dir) {
-            const container = window.parent.document.querySelector('div[data-testid="stHorizontalBlock"]');
+            const container = window.parent.document.querySelector('div[data-testid="stDataFrameResizable"] > div[role="grid"]');
             if (container) {
                 container.scrollBy({ left: dir * 200, behavior: 'smooth' });
             }
@@ -198,7 +198,7 @@ if uploaded_files:
         </script>
         """
 
-        components.html(scroll_controls, height=40)
+        components.html(scroll_controls, height=50)
 
         st.dataframe(page_df, use_container_width=True, height=600)
 
