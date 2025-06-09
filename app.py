@@ -2,6 +2,8 @@ import streamlit as st
 import pandas as pd
 import re
 
+st.set_page_config(page_title="💼 US Job Directory", layout="wide")
+
 st.markdown(
     """
     <style>
@@ -33,7 +35,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-st.set_page_config(page_title="💼 US Job Directory", layout="wide")
+
 
 st.title("💼 US Job Directory Demo")
 
