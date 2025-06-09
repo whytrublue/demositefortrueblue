@@ -33,7 +33,7 @@ COLUMN_ALIASES = {
     "Last Name": ["last name", "lname", "last"],
     "Email Address": ["email", "email address", "e-mail"],
     "Job Title": ["job title", "position", "title", "license type"],
-    "Office Name": ["office", "office name", "company"],
+    "Office Name": ["office", "office name", "company","Office Phone"],
     "Phone": ["phone", "phone number", "telephone"],
     "Mobile": ["mobile", "mobile number", "cell", "cell phone"],
     "Street Address": ["address", "street address", "street", "office address1"],
