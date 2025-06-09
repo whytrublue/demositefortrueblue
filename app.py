@@ -1,8 +1,9 @@
-import streamlit as st
+""import streamlit as st
 import pandas as pd
 import re
+import streamlit.components.v1 as components
 
-st.set_page_config(page_title="💼 US Job Directory", layout="wide")
+st.set_page_config(page_title="\U0001F4BC US Job Directory", layout="wide")
 
 # CSS Styling
 st.markdown(
@@ -13,24 +14,30 @@ st.markdown(
     label { color: #1a237e; font-weight: bold; }
     .stDataFrame thead tr th { background-color: #0d47a1 !important; color: white !important; }
     .css-1d391kg { background-color: #e3f2fd; }
-    .scrollable-table-container {
-        overflow-x: auto;
-        white-space: nowrap;
+    .horizontal-scroll-buttons {
+        display: flex;
+        justify-content: space-between;
+        margin-top: -40px;
+        margin-bottom: 10px;
     }
     .scroll-btn {
-        font-size: 20px;
-        margin: 5px;
+        background-color: #0d47a1;
+        color: white;
+        border: none;
+        padding: 8px 12px;
+        font-size: 14px;
         cursor: pointer;
+        border-radius: 6px;
     }
     </style>
     """,
     unsafe_allow_html=True,
 )
 
-st.title("💼 US Job Directory Demo")
+st.title("\U0001F4BC US Job Directory Demo")
 
 uploaded_files = st.file_uploader(
-    label="📂 Upload Excel (.xlsx) files", 
+    label="\U0001F4C2 Upload Excel (.xlsx) files", 
     type=["xlsx"], 
     accept_multiple_files=True
 )
@@ -83,12 +90,12 @@ if uploaded_files:
         # Filters
         filter_cols = st.columns([2, 2, 2, 2, 2, 2, 2])
 
-        full_name_search = filter_cols[0].text_input("🔎 Full Name")
+        full_name_search = filter_cols[0].text_input("\U0001F50E Full Name")
         job_filter = filter_cols[1].multiselect(
             "Job Title", options=sorted(combined_df["Job Title"].dropna().unique())
         )
-        website_search = filter_cols[2].text_input("🌐 Website URL")
-        phone_search = filter_cols[3].text_input("📞 Phone Number")
+        website_search = filter_cols[2].text_input("\U0001F310 Website URL")
+        phone_search = filter_cols[3].text_input("\U0001F4DE Phone Number")
         city_filter = filter_cols[4].multiselect(
             "City", options=sorted(combined_df["City"].dropna().unique())
         )
@@ -147,7 +154,6 @@ if uploaded_files:
         if industry_filter:
             filtered_df = filtered_df[filtered_df["Industry Tag"].isin(industry_filter)]
 
-        # Clean up
         filtered_df = filtered_df.drop(columns=[c for c in ["norm_website", "norm_phone"] if c in filtered_df.columns])
 
         PAGE_SIZE = 30
@@ -174,22 +180,30 @@ if uploaded_files:
         page_df.reset_index(drop=True, inplace=True)
         page_df.index += 1
 
-        # Replace NaN with blank for cleaner display
         page_df = page_df.fillna("")
 
-        # Render DataFrame with scrollable container and buttons
-        st.markdown("""
-            <div class="scrollable-table-container">
-                <button class="scroll-btn" onclick="document.querySelector('.scrollable-table-container').scrollLeft -= 300">⬅️</button>
-                <button class="scroll-btn" onclick="document.querySelector('.scrollable-table-container').scrollLeft += 300">➡️</button>
-        """, unsafe_allow_html=True)
+        # Scroll buttons HTML + JS
+        scroll_controls = """
+        <div class="horizontal-scroll-buttons">
+            <button class="scroll-btn" onclick="scrollTable(-1)">⬅ Scroll Left</button>
+            <button class="scroll-btn" onclick="scrollTable(1)">Scroll Right ➡</button>
+        </div>
+        <script>
+        function scrollTable(dir) {
+            const container = window.parent.document.querySelector('div[data-testid="stHorizontalBlock"]');
+            if (container) {
+                container.scrollBy({ left: dir * 200, behavior: 'smooth' });
+            }
+        }
+        </script>
+        """
+
+        components.html(scroll_controls, height=40)
 
         st.dataframe(page_df, use_container_width=True, height=600)
 
-        st.markdown("""</div>""", unsafe_allow_html=True)
-
         st.download_button(
-            label="📅 Download Filtered Data as CSV",
+            label="\U0001F4E5 Download Filtered Data as CSV",
             data=filtered_df.to_csv(index=False),
             file_name="filtered_data.csv",
             mime="text/csv"
@@ -199,4 +213,4 @@ if uploaded_files:
         st.error(f"⚠️ Error processing uploaded files: {e}")
 
 else:
-    st.info("👆 Please upload one or more .xlsx files to start.")
+    st.info("\U0001F446 Please upload one or more .xlsx files to start.")
