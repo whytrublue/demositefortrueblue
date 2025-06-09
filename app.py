@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import re
+import streamlit.components.v1 as components
 
 st.set_page_config(page_title="💼 US Job Directory", layout="wide")
 
@@ -43,7 +44,6 @@ COLUMN_ALIASES = {
     "Website": ["website", "url"],
     "Industry Tag": ["industry", "tag", "category"]
 }
-
 
 # Column auto-mapping function
 def auto_map_columns(df, alias_dict):
@@ -120,7 +120,7 @@ if uploaded_files:
                 if pd.isna(phone): return ""
                 return re.sub(r"\D", "", str(phone))
             norm_phone_search = re.sub(r"\D", "", phone_search)
-            filtered_df["norm_phone"] = filtered_df["Phone"].apply(normalize_phone)
+            filtered_df["norm_phone"] = filtered_df["Office Phone"].apply(normalize_phone)
             filtered_df = filtered_df[
                 filtered_df["norm_phone"].str.contains(norm_phone_search, na=False)
             ]
@@ -139,7 +139,6 @@ if uploaded_files:
         if industry_filter:
             filtered_df = filtered_df[filtered_df["Industry Tag"].isin(industry_filter)]
 
-        # Clean up
         filtered_df = filtered_df.drop(columns=[c for c in ["norm_website", "norm_phone"] if c in filtered_df.columns])
 
         PAGE_SIZE = 30
@@ -166,14 +165,33 @@ if uploaded_files:
         page_df.reset_index(drop=True, inplace=True)
         page_df.index += 1
 
-        styled_df = page_df.style.set_table_styles([
-            {'selector': 'th', 'props': [('font-weight', 'bold'), ('color', '#0d47a1')]}
-        ])
+        html_table = page_df.to_html(index=True, classes='dataframe', border=0)
 
-        st.dataframe(styled_df, use_container_width=True, height=600)
+        styled_html = f"""
+        <div style="display: flex; justify-content: space-between; align-items: center; margin: 10px 0;">
+            <button onclick=\"document.getElementById('scrollable-table').scrollLeft -= 300\">⬅️ Scroll Left</button>
+            <button onclick=\"document.getElementById('scrollable-table').scrollLeft += 300\">Scroll Right ➡️</button>
+        </div>
+        <div id="scrollable-table" style="overflow-x: auto; max-width: 100%; border: 1px solid #ccc; border-radius: 8px;">
+            {html_table}
+        </div>
+        <style>
+            .dataframe th, .dataframe td {{
+                padding: 8px 12px;
+                text-align: left;
+                white-space: nowrap;
+            }}
+            .dataframe thead {{
+                background-color: #0d47a1;
+                color: white;
+            }}
+        </style>
+        """
+
+        components.html(styled_html, height=650, scrolling=True)
 
         st.download_button(
-            label="📥 Download Filtered Data as CSV",
+            label="📅 Download Filtered Data as CSV",
             data=filtered_df.to_csv(index=False),
             file_name="filtered_data.csv",
             mime="text/csv"
