@@ -4,32 +4,15 @@ import re
 
 st.set_page_config(page_title="💼 US Job Directory", layout="wide")
 
+# CSS Styling
 st.markdown(
     """
     <style>
-    /* Background color */
-    .stApp {
-        background-color: #A4D4FF;
-        color: #111111;
-    }
-    /* Title style */
-    .css-1d391kg h1 {
-        color: #1a73e8;
-    }
-    /* Filter labels */
-    label {
-        color: #1a237e;
-        font-weight: bold;
-    }
-    /* Dataframe header */
-    .stDataFrame thead tr th {
-        background-color: #0d47a1 !important;
-        color: white !important;
-    }
-    /* Sidebar */
-    .css-1d391kg {
-        background-color: #e3f2fd;
-    }
+    .stApp { background-color: #A4D4FF; color: #111111; }
+    .css-1d391kg h1 { color: #1a73e8; }
+    label { color: #1a237e; font-weight: bold; }
+    .stDataFrame thead tr th { background-color: #0d47a1 !important; color: white !important; }
+    .css-1d391kg { background-color: #e3f2fd; }
     </style>
     """,
     unsafe_allow_html=True,
@@ -43,24 +26,51 @@ uploaded_files = st.file_uploader(
     accept_multiple_files=True
 )
 
+# Define alias mapping
+COLUMN_ALIASES = {
+    "Full Name": ["full name", "name"],
+    "First Name": ["first name", "fname", "first"],
+    "Last Name": ["last name", "lname", "last"],
+    "Email Address": ["email", "email address", "e-mail"],
+    "Job Title": ["job title", "position", "title"],
+    "Office Name": ["office", "office name", "company"],
+    "Phone": ["phone", "phone number", "telephone"],
+    "Street Address": ["address", "street address", "street"],
+    "City": ["city", "town"],
+    "State": ["state", "province"],
+    "Zip": ["zip", "zipcode", "postal code"],
+    "Website": ["website", "url"],
+    "Industry Tag": ["industry", "tag", "category"]
+}
+
+# Column auto-mapping function
+def auto_map_columns(df, alias_dict):
+    mapped_cols = {}
+    df_cols_lower = {col.lower(): col for col in df.columns}
+    for std_col, aliases in alias_dict.items():
+        found = next((df_cols_lower[alias] for alias in aliases if alias in df_cols_lower), None)
+        if found:
+            mapped_cols[found] = std_col
+        else:
+            df[std_col] = ""  # Add missing columns as empty
+    return df.rename(columns=mapped_cols)
+
 if uploaded_files:
     try:
-        # Read and combine all uploaded files
         dfs = []
         for uploaded_file in uploaded_files:
             df_temp = pd.read_excel(uploaded_file)
+            df_temp = auto_map_columns(df_temp, COLUMN_ALIASES)
             dfs.append(df_temp)
+
         combined_df = pd.concat(dfs, ignore_index=True)
 
-        expected_columns = [
-            "Full Name", "First Name", "Last Name", "Email Address", "Job Title",
-            "Office Name", "Phone", "Street Address", "City", "State",
-            "Zip", "Website", "Industry Tag"
-        ]
+        expected_columns = list(COLUMN_ALIASES.keys())
         if not all(col in combined_df.columns for col in expected_columns):
             st.error("❌ Uploaded files are missing required columns.")
             st.stop()
 
+        # Filters
         filter_cols = st.columns([2, 2, 2, 2, 2, 2, 2])
 
         full_name_search = filter_cols[0].text_input("🔎 Full Name")
@@ -93,12 +103,10 @@ if uploaded_files:
 
         if website_search:
             def normalize_url(url):
-                if pd.isna(url):
-                    return ""
+                if pd.isna(url): return ""
                 url = url.lower().strip()
                 url = re.sub(r"^https?://", "", url)
-                url = url.rstrip("/")
-                return url
+                return url.rstrip("/")
             norm_website_search = normalize_url(website_search)
             filtered_df["norm_website"] = filtered_df["Website"].apply(normalize_url)
             filtered_df = filtered_df[
@@ -107,8 +115,7 @@ if uploaded_files:
 
         if phone_search:
             def normalize_phone(phone):
-                if pd.isna(phone):
-                    return ""
+                if pd.isna(phone): return ""
                 return re.sub(r"\D", "", str(phone))
             norm_phone_search = re.sub(r"\D", "", phone_search)
             filtered_df["norm_phone"] = filtered_df["Phone"].apply(normalize_phone)
@@ -130,7 +137,7 @@ if uploaded_files:
         if industry_filter:
             filtered_df = filtered_df[filtered_df["Industry Tag"].isin(industry_filter)]
 
-        # Clean up helper columns
+        # Clean up
         filtered_df = filtered_df.drop(columns=[c for c in ["norm_website", "norm_phone"] if c in filtered_df.columns])
 
         PAGE_SIZE = 30
@@ -155,7 +162,7 @@ if uploaded_files:
 
         page_df = filtered_df.iloc[start_idx:end_idx].copy()
         page_df.reset_index(drop=True, inplace=True)
-        page_df.index += 1  # start index at 1
+        page_df.index += 1
 
         styled_df = page_df.style.set_table_styles([
             {'selector': 'th', 'props': [('font-weight', 'bold'), ('color', '#0d47a1')]}
