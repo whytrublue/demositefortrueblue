@@ -37,50 +37,51 @@ st.markdown(
 
 st.title("💼 US Job Directory Demo")
 
+uploaded_files = st.file_uploader(
+    label="📂 Upload Excel (.xlsx) files", 
+    type=["xlsx"], 
+    accept_multiple_files=True
+)
+
 if uploaded_files:
-    dfs = []
-    for uploaded_file in uploaded_files:
-        df = pd.read_excel(uploaded_file)
-        dfs.append(df)
-    combined_df = pd.concat(dfs, ignore_index=True)
-    
-    # Now proceed with filtering, pagination, etc. on combined_df
-
-
-if uploaded_file:
     try:
-        df = pd.read_excel(uploaded_file)
+        # Read and combine all uploaded files
+        dfs = []
+        for uploaded_file in uploaded_files:
+            df_temp = pd.read_excel(uploaded_file)
+            dfs.append(df_temp)
+        combined_df = pd.concat(dfs, ignore_index=True)
 
         expected_columns = [
             "Full Name", "First Name", "Last Name", "Email Address", "Job Title",
             "Office Name", "Phone", "Street Address", "City", "State",
             "Zip", "Website", "Industry Tag"
         ]
-        if not all(col in df.columns for col in expected_columns):
-            st.error("❌ Uploaded file is missing required columns.")
+        if not all(col in combined_df.columns for col in expected_columns):
+            st.error("❌ Uploaded files are missing required columns.")
             st.stop()
 
         filter_cols = st.columns([2, 2, 2, 2, 2, 2, 2])
 
         full_name_search = filter_cols[0].text_input("🔎 Full Name")
         job_filter = filter_cols[1].multiselect(
-            "Job Title", options=sorted(df["Job Title"].dropna().unique())
+            "Job Title", options=sorted(combined_df["Job Title"].dropna().unique())
         )
         website_search = filter_cols[2].text_input("🌐 Website URL")
         phone_search = filter_cols[3].text_input("📞 Phone Number")
         city_filter = filter_cols[4].multiselect(
-            "City", options=sorted(df["City"].dropna().unique())
+            "City", options=sorted(combined_df["City"].dropna().unique())
         )
         state_filter = filter_cols[5].multiselect(
-            "State", options=sorted(df["State"].dropna().unique())
+            "State", options=sorted(combined_df["State"].dropna().unique())
         )
         zip_search = filter_cols[6].text_input("🏷️ Zip Code")
 
         industry_filter = st.multiselect(
-            "Industry Tag", options=sorted(df["Industry Tag"].dropna().unique())
+            "Industry Tag", options=sorted(combined_df["Industry Tag"].dropna().unique())
         )
 
-        filtered_df = df.copy()
+        filtered_df = combined_df.copy()
 
         if full_name_search:
             filtered_df = filtered_df[
@@ -126,11 +127,15 @@ if uploaded_file:
                 filtered_df["Zip"].astype(str).str.contains(zip_search, na=False)
             ]
 
+        if industry_filter:
+            filtered_df = filtered_df[filtered_df["Industry Tag"].isin(industry_filter)]
+
+        # Clean up helper columns
         filtered_df = filtered_df.drop(columns=[c for c in ["norm_website", "norm_phone"] if c in filtered_df.columns])
 
-        PAGE_SIZE = 100
+        PAGE_SIZE = 30
         total_rows = len(filtered_df)
-        total_pages = (total_rows - 1) // PAGE_SIZE + 1
+        total_pages = (total_rows - 1) // PAGE_SIZE + 1 if total_rows > 0 else 1
 
         if "page" not in st.session_state:
             st.session_state.page = 0
@@ -150,7 +155,7 @@ if uploaded_file:
 
         page_df = filtered_df.iloc[start_idx:end_idx].copy()
         page_df.reset_index(drop=True, inplace=True)
-        page_df.index += 1  # start numbering from 1
+        page_df.index += 1  # start index at 1
 
         styled_df = page_df.style.set_table_styles([
             {'selector': 'th', 'props': [('font-weight', 'bold'), ('color', '#0d47a1')]}
@@ -166,7 +171,7 @@ if uploaded_file:
         )
 
     except Exception as e:
-        st.error(f"⚠️ Error reading file: {e}")
+        st.error(f"⚠️ Error processing uploaded files: {e}")
 
 else:
-    st.info("👆 Please upload a .xlsx file to start.")
+    st.info("👆 Please upload one or more .xlsx files to start.")
