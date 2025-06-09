@@ -2,6 +2,37 @@ import streamlit as st
 import pandas as pd
 import re
 
+st.markdown(
+    """
+    <style>
+    /* Background color */
+    .stApp {
+        background-color: #f0f8ff;
+        color: #111111;
+    }
+    /* Title style */
+    .css-1d391kg h1 {
+        color: #1a73e8;
+    }
+    /* Filter labels */
+    label {
+        color: #1a237e;
+        font-weight: bold;
+    }
+    /* Dataframe header */
+    .stDataFrame thead tr th {
+        background-color: #0d47a1 !important;
+        color: white !important;
+    }
+    /* Sidebar */
+    .css-1d391kg {
+        background-color: #e3f2fd;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 st.set_page_config(page_title="💼 US Job Directory", layout="wide")
 
 st.title("💼 US Job Directory Demo")
