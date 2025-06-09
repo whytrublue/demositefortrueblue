@@ -144,7 +144,15 @@ if uploaded_file:
 
         st.markdown(f"Showing rows {start_idx + 1} to {min(end_idx, total_rows)} of {total_rows}")
 
-        st.dataframe(filtered_df.iloc[start_idx:end_idx], use_container_width=True, height=600)
+        page_df = filtered_df.iloc[start_idx:end_idx].copy()
+        page_df.reset_index(drop=True, inplace=True)
+        page_df.index += 1  # start numbering from 1
+
+        styled_df = page_df.style.set_table_styles([
+            {'selector': 'th', 'props': [('font-weight', 'bold'), ('color', '#0d47a1')]}
+        ])
+
+        st.dataframe(styled_df, use_container_width=True, height=600)
 
         st.download_button(
             label="📥 Download Filtered Data as CSV",
