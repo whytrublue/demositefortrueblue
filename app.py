@@ -32,16 +32,18 @@ COLUMN_ALIASES = {
     "First Name": ["first name", "fname", "first"],
     "Last Name": ["last name", "lname", "last"],
     "Email Address": ["email", "email address", "e-mail"],
-    "Job Title": ["job title", "position", "title"],
+    "Job Title": ["job title", "position", "title", "license type"],
     "Office Name": ["office", "office name", "company"],
     "Phone": ["phone", "phone number", "telephone"],
-    "Street Address": ["address", "street address", "street"],
-    "City": ["city", "town"],
-    "State": ["state", "province"],
-    "Zip": ["zip", "zipcode", "postal code"],
+    "Mobile": ["mobile", "mobile number", "cell", "cell phone"],
+    "Street Address": ["address", "street address", "street", "office address1"],
+    "City": ["city", "town", "office city"],
+    "State": ["state", "province", "office state"],
+    "Zip": ["zip", "zipcode", "postal code", "office zip"],
     "Website": ["website", "url"],
     "Industry Tag": ["industry", "tag", "category"]
 }
+
 
 # Column auto-mapping function
 def auto_map_columns(df, alias_dict):
