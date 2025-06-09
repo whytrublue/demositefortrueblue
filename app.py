@@ -37,11 +37,15 @@ st.markdown(
 
 st.title("💼 US Job Directory Demo")
 
-uploaded_file = st.file_uploader(
-    label="📂 Upload Excel (.xlsx)", 
-    type=["xlsx"], 
-    label_visibility="visible"
-)
+if uploaded_files:
+    dfs = []
+    for uploaded_file in uploaded_files:
+        df = pd.read_excel(uploaded_file)
+        dfs.append(df)
+    combined_df = pd.concat(dfs, ignore_index=True)
+    
+    # Now proceed with filtering, pagination, etc. on combined_df
+
 
 if uploaded_file:
     try:
