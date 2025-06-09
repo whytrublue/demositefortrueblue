@@ -5,7 +5,7 @@ import streamlit.components.v1 as components
 
 st.set_page_config(page_title="\U0001F4BC US Job Directory", layout="wide")
 
-# CSS Styling with scroll buttons positioned absolutely outside the table on right side
+# CSS Styling with fixed scroll buttons on right side of screen
 st.markdown(
     """
     <style>
@@ -23,27 +23,34 @@ st.markdown(
         height: 600px !important;
     }
 
-    /* Scroll buttons styling */
+    /* Fixed scroll buttons on the right side of the viewport */
     .scroll-btn {
-        position: absolute;
-        right: -130px; /* outside right edge of table */
-        width: 120px;
+        position: fixed;
+        right: 20px;
+        width: 140px;
         background-color: #0d47a1;
         color: white;
         border: none;
-        padding: 8px;
+        padding: 10px;
         font-size: 14px;
         cursor: pointer;
         border-radius: 6px;
         user-select: none;
-        z-index: 1000;
+        z-index: 2000;
         box-shadow: 0 0 5px rgba(0,0,0,0.3);
+        opacity: 0.8;
+        transition: opacity 0.3s ease;
     }
+    .scroll-btn:hover {
+        opacity: 1;
+    }
+
     .scroll-left-btn {
-        top: 370px; /* approx aligned near 10th row */
+        top: 45%;
+        margin-bottom: 10px;
     }
     .scroll-right-btn {
-        top: 410px;
+        top: 55%;
     }
     </style>
     """,
@@ -53,12 +60,11 @@ st.markdown(
 st.title("\U0001F4BC US Job Directory Demo")
 
 uploaded_files = st.file_uploader(
-    label="\U0001F4C2 Upload Excel (.xlsx) files", 
-    type=["xlsx"], 
+    label="\U0001F4C2 Upload Excel (.xlsx) files",
+    type=["xlsx"],
     accept_multiple_files=True
 )
 
-# Define alias mapping
 COLUMN_ALIASES = {
     "Full Name": ["full name", "name"],
     "First Name": ["first name", "fname", "first"],
@@ -66,7 +72,7 @@ COLUMN_ALIASES = {
     "Email Address": ["email", "email address", "e-mail"],
     "Job Title": ["job title", "position", "title", "license type"],
     "Office Name": ["office", "office name", "company"],
-    "Office Phone": ["phone", "phone number", "telephone","Office Number"],
+    "Office Phone": ["phone", "phone number", "telephone", "Office Number"],
     "Mobile": ["mobile", "mobile number", "cell", "cell phone"],
     "Street Address": ["address", "street address", "street", "office address1"],
     "City": ["city", "town", "office city"],
@@ -76,7 +82,6 @@ COLUMN_ALIASES = {
     "Industry Tag": ["industry", "tag", "category"]
 }
 
-# Column auto-mapping function
 def auto_map_columns(df, alias_dict):
     mapped_cols = {}
     df_cols_lower = {col.lower(): col for col in df.columns}
@@ -197,26 +202,36 @@ if uploaded_files:
         page_df.index += 1
         page_df = page_df.fillna("")
 
-        # Display the dataframe normally
+        # Show dataframe
         st.dataframe(page_df, use_container_width=True, height=600)
 
-        # Inject scroll buttons with JS to scroll the dataframe container horizontally
+        # Scroll buttons HTML + JS
         scroll_buttons_html = """
         <button class="scroll-btn scroll-left-btn" onclick="scrollTable(-1)">⬅ Scroll Left</button>
         <button class="scroll-btn scroll-right-btn" onclick="scrollTable(1)">Scroll Right ➡</button>
+
         <script>
         function scrollTable(direction) {
-            // Locate the horizontally scrollable div inside the Streamlit dataframe widget
-            const container = window.parent.document.querySelector('div[data-testid="stDataFrameResizable"] > div[role="grid"]');
+            const containers = window.parent.document.querySelectorAll('div[data-testid="stDataFrameResizable"] > div[role="grid"]');
+            let container = null;
+            for(let c of containers) {
+                const style = window.getComputedStyle(c);
+                if(style && style.display !== 'none' && style.visibility !== 'hidden' && c.offsetWidth > 0 && c.offsetHeight > 0) {
+                    container = c;
+                    break;
+                }
+            }
             if(container) {
                 container.scrollBy({ left: direction * 200, behavior: 'smooth' });
+            } else {
+                alert('Scrollable table container not found.');
             }
         }
         </script>
         """
         components.html(scroll_buttons_html, height=150)
 
-        # Download button below
+        # Download filtered CSV
         st.download_button(
             label="\U0001F4E5 Download Filtered Data as CSV",
             data=filtered_df.to_csv(index=False),
