@@ -5,7 +5,7 @@ import streamlit.components.v1 as components
 
 st.set_page_config(page_title="\U0001F4BC US Job Directory", layout="wide")
 
-# CSS Styling
+# CSS Styling with scroll buttons positioned absolutely outside the table on right side
 st.markdown(
     """
     <style>
@@ -14,20 +14,36 @@ st.markdown(
     label { color: #1a237e; font-weight: bold; }
     .stDataFrame thead tr th { background-color: #0d47a1 !important; color: white !important; }
     .css-1d391kg { background-color: #e3f2fd; }
-    .horizontal-scroll-buttons {
-        display: flex;
-        justify-content: space-between;
-        margin-top: -40px;
-        margin-bottom: 10px;
+
+    /* Dataframe container horizontal scroll */
+    div[data-testid="stDataFrameResizable"] > div[role="grid"] {
+        overflow-x: auto !important;
+        position: relative;
+        max-height: 600px !important;
+        height: 600px !important;
     }
+
+    /* Scroll buttons styling */
     .scroll-btn {
+        position: absolute;
+        right: -130px; /* outside right edge of table */
+        width: 120px;
         background-color: #0d47a1;
         color: white;
         border: none;
-        padding: 8px 12px;
+        padding: 8px;
         font-size: 14px;
         cursor: pointer;
         border-radius: 6px;
+        user-select: none;
+        z-index: 1000;
+        box-shadow: 0 0 5px rgba(0,0,0,0.3);
+    }
+    .scroll-left-btn {
+        top: 370px; /* approx aligned near 10th row */
+    }
+    .scroll-right-btn {
+        top: 410px;
     }
     </style>
     """,
@@ -179,29 +195,28 @@ if uploaded_files:
         page_df = filtered_df.iloc[start_idx:end_idx].copy()
         page_df.reset_index(drop=True, inplace=True)
         page_df.index += 1
-
         page_df = page_df.fillna("")
 
-        # Scroll buttons HTML + JS added here BEFORE dataframe
-        scroll_controls = """
-        <div class="horizontal-scroll-buttons">
-            <button class="scroll-btn" onclick="scrollTable(-1)">⬅ Scroll Left</button>
-            <button class="scroll-btn" onclick="scrollTable(1)">Scroll Right ➡</button>
-        </div>
+        # Display the dataframe normally
+        st.dataframe(page_df, use_container_width=True, height=600)
+
+        # Inject scroll buttons with JS to scroll the dataframe container horizontally
+        scroll_buttons_html = """
+        <button class="scroll-btn scroll-left-btn" onclick="scrollTable(-1)">⬅ Scroll Left</button>
+        <button class="scroll-btn scroll-right-btn" onclick="scrollTable(1)">Scroll Right ➡</button>
         <script>
-        function scrollTable(dir) {
+        function scrollTable(direction) {
+            // Locate the horizontally scrollable div inside the Streamlit dataframe widget
             const container = window.parent.document.querySelector('div[data-testid="stDataFrameResizable"] > div[role="grid"]');
-            if (container) {
-                container.scrollBy({ left: dir * 200, behavior: 'smooth' });
+            if(container) {
+                container.scrollBy({ left: direction * 200, behavior: 'smooth' });
             }
         }
         </script>
         """
+        components.html(scroll_buttons_html, height=150)
 
-        components.html(scroll_controls, height=50)
-
-        st.dataframe(page_df, use_container_width=True, height=600)
-
+        # Download button below
         st.download_button(
             label="\U0001F4E5 Download Filtered Data as CSV",
             data=filtered_df.to_csv(index=False),
