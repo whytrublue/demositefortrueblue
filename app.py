@@ -215,22 +215,6 @@ if uploaded_files:
         # Display the dataframe normally
         st.dataframe(page_df, use_container_width=True, height=600)
 
-        # Inject scroll buttons with JS to scroll the dataframe container horizontally
-        scroll_buttons_html = """
-        <button class="scroll-btn scroll-left-btn" onclick="scrollTable(-1)">⬅ Scroll Left</button>
-        <button class="scroll-btn scroll-right-btn" onclick="scrollTable(1)">Scroll Right ➡</button>
-        <script>
-        function scrollTable(direction) {
-            // Locate the horizontally scrollable div inside the Streamlit dataframe widget
-            const container = window.parent.document.querySelector('div[data-testid="stDataFrameResizable"] > div[role="grid"]');
-            if(container) {
-                container.scrollBy({ left: direction * 200, behavior: 'smooth' });
-            }
-        }
-        </script>
-        """
-        components.html(scroll_buttons_html, height=150)
-
         # Download button below
         st.download_button(
             label="\U0001F4E5 Download Filtered Data as CSV",
